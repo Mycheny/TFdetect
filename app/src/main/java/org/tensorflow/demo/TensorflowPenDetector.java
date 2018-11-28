@@ -32,9 +32,9 @@ public class TensorflowPenDetector implements ClassifierPen {
         tpd.inferenceInterface = new TensorFlowInferenceInterface(assetManager, modelFilename);
         final Graph g = tpd.inferenceInterface.graph();
 
-        tpd.inputName = "Placeholder:0";
-        tpd.outputVectNmae = "export/pen/stage4/Phase4_vect/Phase4_vect_Conv2d_5_3_pointwise/BatchNorm/FusedBatchNorm:0";
-        tpd.outputHeatNmae = "export/pen/stage4/Phase4_heat/Phase4_heat_Conv2d_5_3_pointwise/BatchNorm/FusedBatchNorm:0";
+        tpd.inputName = "Placeholder";
+        tpd.outputVectNmae = "export/pen/stage4/Phase4_vect/Phase4_vect_Conv2d_5_3_pointwise/BatchNorm/FusedBatchNorm";
+        tpd.outputHeatNmae = "export/pen/stage4/Phase4_heat/Phase4_heat_Conv2d_5_3_pointwise/BatchNorm/FusedBatchNorm";
         tpd.outputNames = new String[]{tpd.outputVectNmae, tpd.outputHeatNmae};
 
         final Operation inputOp = g.operation(tpd.inputName);

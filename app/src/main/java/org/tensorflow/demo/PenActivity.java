@@ -26,7 +26,7 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
     private static final int INPUT_SIZE_WIDTH = 640;
     private static final int INPUT_SIZE_HEIGHT = 480;
     private ClassifierPen detector;
-    private static final String MODEL_FILE = "file:///android_asset/ssd_mobilenet_v1_android_export.pb";
+    private static final String MODEL_FILE = "file:///android_asset/model_pen.pb";
     OverlayView trackingOverlay;
 
     private Integer sensorOrientation;
@@ -111,6 +111,9 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
         previewHeight = size.getHeight();
         sensorOrientation = rotation - getScreenOrientation();
 
+        rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
+        croppedBitmap = Bitmap.createBitmap(INPUT_SIZE_WIDTH, INPUT_SIZE_HEIGHT, Bitmap.Config.ARGB_8888);
+
         frameToCropTransform =
                 ImageUtils.getTransformationMatrix(
                         previewWidth, previewHeight,
@@ -169,7 +172,7 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
      */
     @Override
     protected int getLayoutId() {
-        return R.id.pen_overlay;
+        return R.layout.camera_connection_fragment_pen;
     }
 
     /**
