@@ -139,7 +139,7 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
     cropToFrameTransform = new Matrix();
     frameToCropTransform.invert(cropToFrameTransform);
 
-    addCallback(
+    addDebugCallback(
         new DrawCallback() {
           @Override
           public void drawCallback(final Canvas canvas) {

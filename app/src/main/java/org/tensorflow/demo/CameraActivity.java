@@ -407,7 +407,7 @@ public abstract class CameraActivity extends Activity
         }
     }
 
-    public void addCallback(final OverlayView.DrawCallback callback) {
+    public void addDebugCallback(final OverlayView.DrawCallback callback) {
         final OverlayView overlay = (OverlayView) findViewById(R.id.debug_overlay);
         if (overlay != null) {
             overlay.addCallback(callback);

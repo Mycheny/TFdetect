@@ -47,17 +47,15 @@ public class MultiBoxTracker {
 
     private static final float TEXT_SIZE_DIP = 18;
 
-    // Maximum percentage of a box that can be overlapped by another box at detection time. Otherwise
-    // the lower scored box (new or old) will be removed.
+    // 检测时可被两个检测框的最大交并比。得分较低的框将被删除
     private static final float MAX_OVERLAP = 0.2f;
 
     private static final float MIN_SIZE = 16.0f;
 
-    // Allow replacement of the tracked box with new results if
-    // correlation has dropped below this level.
+    // 如果相关性低于这个水平，允许用新的结果替换跟踪框
     private static final float MARGINAL_CORRELATION = 0.75f;
 
-    // Consider object to be lost if correlation falls below this threshold.
+    // 如果相关性低于此阈值，则认为对象丢失
     private static final float MIN_CORRELATION = 0.3f;
 
     private static final int[] COLORS = {
@@ -124,7 +122,7 @@ public class MultiBoxTracker {
         textPaint.setColor(Color.WHITE);
         textPaint.setTextSize(60.0f);
 
-        final Paint boxPaint = new Paint();
+        final Paint boxPaint = new Paint(); //debug 模式大视图中的物体模型识别的位置的矩形画笔
         boxPaint.setColor(Color.RED);
         boxPaint.setAlpha(200);
         boxPaint.setStyle(Style.STROKE);
@@ -140,14 +138,14 @@ public class MultiBoxTracker {
             return;
         }
 
-        // Draw correlations.
+        // Draw correlations. 相关性
         for (final TrackedRecognition recognition : trackedObjects) {
             final ObjectTracker.TrackedObject trackedObject = recognition.trackedObject;
 
             final RectF trackedPos = trackedObject.getTrackedPositionInPreviewFrame();
 
             if (getFrameToCanvasMatrix().mapRect(trackedPos)) {
-                final String labelString = String.format("%.2f", trackedObject.getCurrentCorrelation());
+                final String labelString = String.format("相关性 %.2f", trackedObject.getCurrentCorrelation());
                 borderedText.drawText(canvas, trackedPos.right, trackedPos.bottom, labelString);
             }
         }
@@ -207,7 +205,7 @@ public class MultiBoxTracker {
         if (objectTracker == null && !initialized) {
             ObjectTracker.clearInstance();
 
-            logger.i("Initializing ObjectTracker: %dx%d", w, h);
+            logger.i("初始化 ObjectTracker: %dx%d", w, h);
             objectTracker = ObjectTracker.getInstance(w, h, rowStride, true);
             frameWidth = w;
             frameHeight = h;
@@ -216,7 +214,7 @@ public class MultiBoxTracker {
 
             if (objectTracker == null) {
                 String message =
-                        "Object tracking support not found. "
+                        "没有找到目标跟踪支持 "
                                 + "See tensorflow/examples/android/README.md for details.";
                 Toast.makeText(context, message, Toast.LENGTH_LONG).show();
                 logger.e(message);
@@ -310,7 +308,7 @@ public class MultiBoxTracker {
 
         final float potentialCorrelation = potentialObject.getCurrentCorrelation();
         logger.v(
-                "Tracked object went from %s to %s with correlation %.2f",
+                "跟踪对象从 %s 到 %s 相关性 %.2f",
                 potential.second, potentialObject.getTrackedPositionInPreviewFrame(), potentialCorrelation);
 
         if (potentialCorrelation < MARGINAL_CORRELATION) {

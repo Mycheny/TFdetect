@@ -131,27 +131,27 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
         int cropSize = TF_OD_API_INPUT_SIZE;
         if (MODE == DetectorMode.YOLO) {
-            detector =
-                    TensorFlowYoloDetector.create(
-                            getAssets(),
-                            YOLO_MODEL_FILE,
-                            YOLO_INPUT_SIZE,
-                            YOLO_INPUT_NAME,
-                            YOLO_OUTPUT_NAMES,
-                            YOLO_BLOCK_SIZE);
-            cropSize = YOLO_INPUT_SIZE;
+//            detector =
+//                    TensorFlowYoloDetector.create(
+//                            getAssets(),
+//                            YOLO_MODEL_FILE,
+//                            YOLO_INPUT_SIZE,
+//                            YOLO_INPUT_NAME,
+//                            YOLO_OUTPUT_NAMES,
+//                            YOLO_BLOCK_SIZE);
+//            cropSize = YOLO_INPUT_SIZE;
         } else if (MODE == DetectorMode.MULTIBOX) {
-            detector =
-                    TensorFlowMultiBoxDetector.create(
-                            getAssets(),
-                            MB_MODEL_FILE,
-                            MB_LOCATION_FILE,
-                            MB_IMAGE_MEAN,
-                            MB_IMAGE_STD,
-                            MB_INPUT_NAME,
-                            MB_OUTPUT_LOCATIONS_NAME,
-                            MB_OUTPUT_SCORES_NAME);
-            cropSize = MB_INPUT_SIZE;
+//            detector =
+//                    TensorFlowMultiBoxDetector.create(
+//                            getAssets(),
+//                            MB_MODEL_FILE,
+//                            MB_LOCATION_FILE,
+//                            MB_IMAGE_MEAN,
+//                            MB_IMAGE_STD,
+//                            MB_INPUT_NAME,
+//                            MB_OUTPUT_LOCATIONS_NAME,
+//                            MB_OUTPUT_SCORES_NAME);
+//            cropSize = MB_INPUT_SIZE;
         } else {
             try {
                 detector = TensorFlowObjectDetectionAPIModel.create(
@@ -192,54 +192,54 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                     @Override
                     public void drawCallback(final Canvas canvas) {
                         tracker.draw(canvas);
-                        if (isDebug()) {
-                            tracker.drawDebug(canvas);
-                        }
+//                        if (isDebug()) {
+//                            tracker.drawDebug(canvas);
+//                        }
                     }
                 });
 
-        addCallback(
-                new DrawCallback() {
-                    @Override
-                    public void drawCallback(final Canvas canvas) {
-                        if (!isDebug()) {
-                            return;
-                        }
-                        final Bitmap copy = cropCopyBitmap;
-                        if (copy == null) {
-                            return;
-                        }
-
-                        final int backgroundColor = Color.argb(100, 0, 0, 0);
-                        canvas.drawColor(backgroundColor);
-
-                        final Matrix matrix = new Matrix();
-                        final float scaleFactor = 2;
-                        matrix.postScale(scaleFactor, scaleFactor);
-                        matrix.postTranslate(
-                                canvas.getWidth() - copy.getWidth() * scaleFactor,
-                                canvas.getHeight() - copy.getHeight() * scaleFactor);
-                        canvas.drawBitmap(copy, matrix, new Paint());
-
-                        final Vector<String> lines = new Vector<String>();
-                        if (detector != null) {
-                            final String statString = detector.getStatString();
-                            final String[] statLines = statString.split("\n");
-                            for (final String line : statLines) {
-                                lines.add(line);
-                            }
-                        }
-                        lines.add("");
-
-                        lines.add("Frame: " + previewWidth + "x" + previewHeight);
-                        lines.add("Crop: " + copy.getWidth() + "x" + copy.getHeight());
-                        lines.add("View: " + canvas.getWidth() + "x" + canvas.getHeight());
-                        lines.add("Rotation: " + sensorOrientation);
-                        lines.add("Inference time: " + lastProcessingTimeMs + "ms");
-
-                        borderedText.drawLines(canvas, 10, canvas.getHeight() - 10, lines);
-                    }
-                });
+//        addDebugCallback(
+//                new DrawCallback() {
+//                    @Override
+//                    public void drawCallback(final Canvas canvas) {
+//                        if (!isDebug()) {
+//                            return;
+//                        }
+//                        final Bitmap copy = cropCopyBitmap;
+//                        if (copy == null) {
+//                            return;
+//                        }
+//
+//                        final int backgroundColor = Color.argb(100, 0, 0, 0);
+//                        canvas.drawColor(backgroundColor);
+//
+//                        final Matrix matrix = new Matrix();
+//                        final float scaleFactor = 2;
+//                        matrix.postScale(scaleFactor, scaleFactor);
+//                        matrix.postTranslate(
+//                                canvas.getWidth() - copy.getWidth() * scaleFactor,
+//                                canvas.getHeight() - copy.getHeight() * scaleFactor);
+//                        canvas.drawBitmap(copy, matrix, new Paint());
+//
+//                        final Vector<String> lines = new Vector<String>();
+//                        if (detector != null) {
+//                            final String statString = detector.getStatString();
+//                            final String[] statLines = statString.split("\n");
+//                            for (final String line : statLines) {
+//                                lines.add(line);
+//                            }
+//                        }
+//                        lines.add("");
+//
+//                        lines.add("Frame: " + previewWidth + "x" + previewHeight);
+//                        lines.add("Crop: " + copy.getWidth() + "x" + copy.getHeight());
+//                        lines.add("View: " + canvas.getWidth() + "x" + canvas.getHeight());
+//                        lines.add("Rotation: " + sensorOrientation);
+//                        lines.add("Inference time: " + lastProcessingTimeMs + "ms");
+//
+//                        borderedText.drawLines(canvas, 10, canvas.getHeight() - 10, lines);
+//                    }
+//                });
     }
 
     OverlayView trackingOverlay;

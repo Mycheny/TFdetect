@@ -45,10 +45,19 @@ public class OverlayView extends View {
     }
 
     @Override
-    public synchronized void draw(final Canvas canvas) {
-        super.draw(canvas);
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
         for (final DrawCallback callback : callbacks) {
             callback.drawCallback(canvas);
         }
     }
+
+//    @Override
+//    public void draw(Canvas canvas) {
+//        super.draw(canvas);
+//    }
+//    @Override
+//    public synchronized void draw(final Canvas canvas) {
+//        super.draw(canvas);
+//    }
 }
