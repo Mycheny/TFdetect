@@ -1,6 +1,7 @@
 package org.tensorflow.demo;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -17,6 +18,7 @@ import org.tensorflow.demo.env.Logger;
 import org.tensorflow.demo.tracking.MultiBoxTracker;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -79,9 +81,31 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                         final long startTime = SystemClock.uptimeMillis();
                         final List<float[]> results = detector.recognizeImage(croppedBitmap);
                         lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+                        float[] heat = results.get(1);
+                        byte[] byteHeat = new byte[3600];
+                        for(int i=0;i<heat.length;i++){
+                            if(i<3600){
+                                byteHeat[i] = (byte) (heat[i]*255-127);
+                            }
+                        }
+                        byte[] byteHeat1 = new byte[3600];
+                        for(int i=0;i<900;i++){
+                            byteHeat1[i*3] = (byte) (i*3%127);
+                            byteHeat1[i*3+1] = (byte) ((i*3+1)%127);
+                            byteHeat1[i*3+2] = (byte) ((i*3+2)%127);
+                        }
+                        Bitmap stitchBmp = Bitmap.createBitmap(20, 15, Bitmap.Config.ARGB_4444);
+
+                        stitchBmp.copyPixelsFromBuffer(ByteBuffer.wrap(byteHeat1));
+
+                        Matrix matrix = new Matrix();
+                        matrix.postScale(16, 16);
+                        // 得到新的圖片
+                        Bitmap newbm = Bitmap.createBitmap(stitchBmp, 0, 0, 20, 15, matrix,true);
 
                         cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
                         final Canvas canvas = new Canvas(cropCopyBitmap);
+                        canvas.drawBitmap(newbm, new Matrix(), null);
                         final Paint paint = new Paint();
                         paint.setColor(Color.RED);
                         paint.setStyle(Paint.Style.STROKE);
@@ -131,6 +155,26 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
 //                        draw(canvas);
                     }
                 });
+        //绘制右下角视图
+        addDebugCallback(
+                new OverlayView.DrawCallback() {
+                    @Override
+                    public void drawCallback(final Canvas canvas) {
+                        final Bitmap copy = cropCopyBitmap;
+
+                        final int backgroundColor = Color.argb(100, 0, 0, 0);
+                        canvas.drawColor(backgroundColor);
+
+                        final Matrix matrix = new Matrix();
+                        final float scaleFactor = 1;
+                        matrix.postScale(scaleFactor, scaleFactor);
+                        matrix.postTranslate(
+                                canvas.getWidth() - copy.getWidth() * scaleFactor,
+                                canvas.getHeight() - copy.getHeight() * scaleFactor);
+                        canvas.drawBitmap(copy, matrix, new Paint());
+                    }
+                });
+
 
     }
 

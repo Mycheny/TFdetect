@@ -314,7 +314,7 @@ public class ObjectTracker {
     }
 
     private void drawHistoryPoint(final Canvas canvas, float startX, float startY) {
-        startX += 0;
+        startX -= startY*0.25;
         startY -= startY/2;
         final Paint p = new Paint();
         p.setAntiAlias(false);

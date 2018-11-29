@@ -16,6 +16,7 @@ limitations under the License.
 package org.tensorflow.demo.env;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.os.Environment;
 
@@ -342,4 +343,21 @@ public class ImageUtils {
 
         return matrix;
     }
+
+    /**
+     * 将字节数组转换为ImageView可调用的Bitmap对象
+     * @param bytes
+     * @return Bitmap
+     */
+    public static Bitmap getPicFromBytes(byte[] bytes,
+                                         BitmapFactory.Options opts) {
+        if (bytes != null)
+            if (opts != null)
+                return BitmapFactory.decodeByteArray(bytes, 0, bytes.length,
+                        opts);
+            else
+                return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        return null;
+    }
+
 }
