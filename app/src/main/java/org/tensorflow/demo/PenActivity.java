@@ -79,20 +79,21 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                     public void run() {
                         LOGGER.i("图像运行检测 " + currTimestamp);
                         final long startTime = SystemClock.uptimeMillis();
-                        final List<float[]> results = detector.recognizeImage(croppedBitmap);
+//                        final List<float[]> results = detector.recognizeImage(croppedBitmap);
                         lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
-                        float[] heat = results.get(1);
-                        byte[] byteHeat = new byte[3600];
-                        for(int i=0;i<heat.length;i++){
-                            if(i<3600){
-                                byteHeat[i] = (byte) (heat[i]*255-127);
-                            }
-                        }
+//                        float[] heat = results.get(1);
+//                        byte[] byteHeat = new byte[3600];
+//                        for(int i=0;i<heat.length;i++){
+//                            if(i<3600){
+//                                byteHeat[i] = (byte) (heat[i]*255-127);
+//                            }
+//                        }
                         byte[] byteHeat1 = new byte[3600];
                         for(int i=0;i<900;i++){
-                            byteHeat1[i*3] = (byte) (i*3%127);
-                            byteHeat1[i*3+1] = (byte) ((i*3+1)%127);
-                            byteHeat1[i*3+2] = (byte) ((i*3+2)%127);
+                            byteHeat1[i*4] = (byte) -1;
+                            byteHeat1[i*4+1] = (byte) -1;
+                            byteHeat1[i*4+2] = (byte) -1;
+                            byteHeat1[i*4+3] = (byte) 50;
                         }
                         Bitmap stitchBmp = Bitmap.createBitmap(20, 15, Bitmap.Config.ARGB_4444);
 
@@ -104,7 +105,7 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                         Bitmap newbm = Bitmap.createBitmap(stitchBmp, 0, 0, 20, 15, matrix,true);
 
                         cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
-                        final Canvas canvas = new Canvas(cropCopyBitmap);
+                        final Canvas canvas = new Canvas(newbm);
                         canvas.drawBitmap(newbm, new Matrix(), null);
                         final Paint paint = new Paint();
                         paint.setColor(Color.RED);
