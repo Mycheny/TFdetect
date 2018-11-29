@@ -25,6 +25,3 @@ local.properties
 
 # Windows files
 Thumbs.db
-
-#model files are too big
-*.pb
