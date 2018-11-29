@@ -52,9 +52,9 @@ public class TensorflowPenDetector implements ClassifierPen {
     public List<float[]> recognizeImage(Bitmap bitmap) {
         bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
         for (int i = 0; i < intValues.length; ++i) {
-            byteValues[i * 3 + 2] = (float) (intValues[i] & 0xFF);
-            byteValues[i * 3 + 1] = (float) ((intValues[i] >> 8) & 0xFF);
-            byteValues[i * 3] = (float) ((intValues[i] >> 16) & 0xFF);
+            byteValues[i * 3 + 2] = (float) (intValues[i] & 0xFF)/255;
+            byteValues[i * 3 + 1] = (float) ((intValues[i] >> 8) & 0xFF)/255;
+            byteValues[i * 3] = (float) ((intValues[i] >> 16) & 0xFF)/255;
         }
         inferenceInterface.feed(inputName, byteValues, 1, inputWidht, inputHeight, 3);
         inferenceInterface.run(outputNames);

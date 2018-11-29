@@ -10,6 +10,7 @@ import android.graphics.RectF;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.SystemClock;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 
@@ -19,6 +20,7 @@ import org.tensorflow.demo.tracking.MultiBoxTracker;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -79,33 +81,40 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                     public void run() {
                         LOGGER.i("图像运行检测 " + currTimestamp);
                         final long startTime = SystemClock.uptimeMillis();
-//                        final List<float[]> results = detector.recognizeImage(croppedBitmap);
+                        final List<float[]> results = detector.recognizeImage(croppedBitmap);
                         lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
-//                        float[] heat = results.get(1);
-//                        byte[] byteHeat = new byte[3600];
-//                        for(int i=0;i<heat.length;i++){
-//                            if(i<3600){
-//                                byteHeat[i] = (byte) (heat[i]*255-127);
+                        float[] heat = results.get(1);
+                        byte[] byteHeat = new byte[3600];
+//                        Bitmap bmp = Bitmap.createBitmap(20, 15, Bitmap.Config.ARGB_4444);
+//                        for(int x = 0;x < 20;x++){
+//                            for(int y = 0;y < 15;y++){
+//                                bmp.setPixel(x,y,Color.argb(255,(int)(heat[(x*20+y)*6]*255),0,0));
 //                            }
 //                        }
-                        byte[] byteHeat1 = new byte[3600];
-                        for(int i=0;i<900;i++){
-                            byteHeat1[i*4] = (byte) -1;
-                            byteHeat1[i*4+1] = (byte) -1;
-                            byteHeat1[i*4+2] = (byte) -1;
-                            byteHeat1[i*4+3] = (byte) 50;
+                        for(int i=0;i<heat.length;i++){
+                            if(i<3600){
+                                byteHeat[i] = (byte) (heat[i]*255);
+                            }
+                        }
+                        byte[] byteHeat1 = new byte[1200];
+                        for(int i=0;i<300;i++){
+                            byteHeat1[i*4] = (byte) 0;
+                            byteHeat1[i*4+1] = (byte) 0;
+                            byteHeat1[i*4+2] = (byte) ((i%20)*5);
+                            // a
+                            byteHeat1[i*4+3] = (byte) -1;
                         }
                         Bitmap stitchBmp = Bitmap.createBitmap(20, 15, Bitmap.Config.ARGB_4444);
 
-                        stitchBmp.copyPixelsFromBuffer(ByteBuffer.wrap(byteHeat1));
+                        stitchBmp.copyPixelsFromBuffer(ByteBuffer.wrap(byteHeat));
 
                         Matrix matrix = new Matrix();
-                        matrix.postScale(16, 16);
+                        matrix.postScale(35, 35);
                         // 得到新的圖片
                         Bitmap newbm = Bitmap.createBitmap(stitchBmp, 0, 0, 20, 15, matrix,true);
 
-                        cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
-                        final Canvas canvas = new Canvas(newbm);
+                        cropCopyBitmap = Bitmap.createBitmap(newbm);
+                        final Canvas canvas = new Canvas(cropCopyBitmap);
                         canvas.drawBitmap(newbm, new Matrix(), null);
                         final Paint paint = new Paint();
                         paint.setColor(Color.RED);
