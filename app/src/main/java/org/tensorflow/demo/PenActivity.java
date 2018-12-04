@@ -125,9 +125,11 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                         canvas.drawText(String.format("FPS %.3f", 1000.0f/lastProcessingTimeMs),0, 50, paint);
                         canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), paint);
 
+                        Paint paintLine = new Paint();
+                        paintLine.setColor(Color.WHITE);
                         for (Deal.Result result: coord){
-                            if(result.grade.count>8.0&result.grade.score>9){
-                                canvas.drawLine(result.point1.x, result.point1.y, result.point2.x, result.point2.y, paint);
+                            if(result.grade.count>9.0&result.grade.score>9){
+                                canvas.drawLine(result.point1.x, result.point1.y, result.point2.x, result.point2.y, paintLine);
                             }
                         }
 
@@ -163,7 +165,7 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
 //            byteHeat1[i*4+2] = byteConfidence1[i*3+2];
             byteHeat1[i*4+2] = 0;
             // a
-            byteHeat1[i*4+3] = (byte) (255*0.7);
+            byteHeat1[i*4+3] = (byte) (255*0.5);
         }
         return byteHeat1;
     }
