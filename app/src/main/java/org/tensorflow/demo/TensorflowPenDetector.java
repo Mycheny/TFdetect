@@ -69,7 +69,7 @@ public class TensorflowPenDetector implements ClassifierPen {
 //            byteValues[i * 3 + 1] = 0;
 //            byteValues[i * 3] = 0;
         }
-        inferenceInterface.feed(inputName, byteValues, 1, inputWidht, inputHeight, 3);
+        inferenceInterface.feed(inputName, byteValues, 1, inputHeight, inputWidht, 3);
         long[] dims = {1, inputWidht, inputHeight, 3};
         FloatBuffer a = FloatBuffer.wrap(byteValues);
         Tensor<Float> b = Tensor.create(dims, a);

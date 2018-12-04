@@ -76,7 +76,7 @@ public abstract class CameraActivity extends Activity
     protected void onCreate(final Bundle savedInstanceState) {
         LOGGER.d("onCreate " + this);
         super.onCreate(null);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); //让屏幕保持常亮
 
         setContentView(R.layout.activity_camera);
 

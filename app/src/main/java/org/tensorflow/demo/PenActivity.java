@@ -14,11 +14,16 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
 
 import org.tensorflow.demo.env.ImageUtils;
 import org.tensorflow.demo.env.Logger;
 import org.tensorflow.demo.tracking.MultiBoxTracker;
+import org.tensorflow.demo.util.Deal;
 import org.tensorflow.demo.util.Numpy;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -26,10 +31,10 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-public class PenActivity extends CameraActivity implements OnImageAvailableListener {
+public class PenActivity extends CameraActivity implements OnImageAvailableListener, OnTouchListener {
     private static final Logger LOGGER = new Logger();
-    private static final Size DESIRED_PREVIEW_SIZE = new Size(610, 480);
-    private static final int INPUT_SIZE_WIDTH = 610;
+    private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 480);
+    private static final int INPUT_SIZE_WIDTH = 640;
     private static final int INPUT_SIZE_HEIGHT = 480;
     private ClassifierPen detector;
     private static final String MODEL_FILE = "file:///android_asset/model_pen.pb";
@@ -43,13 +48,17 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
     private boolean computingDetection = false;
     private Bitmap rgbFrameBitmap = null;
     private Bitmap croppedBitmap = null;
-    private Bitmap cropCopyBitmap = null;
+    private Bitmap cropCopyBitmap = null;  //右下角视图
     private byte[] luminanceCopy;
 
     private Matrix frameToCropTransform;
     private Matrix cropToFrameTransform;
 
     private long lastProcessingTimeMs;
+    private float offset_x = -1;
+    private float offset_y = -1;
+
+    private Deal deal = Deal.getInstance();
 
     @Override
     protected void processImage() {
@@ -84,21 +93,23 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                         LOGGER.i("图像运行检测 " + currTimestamp);
                         final long startTime = SystemClock.uptimeMillis();
                         final List<float[]> results = detector.recognizeImage(croppedBitmap);
-                        Numpy vectArray = new Numpy(results.get(0));
-                        Numpy heatArray = new Numpy(results.get(1));
-                        Numpy confidence1Array = new Numpy(results.get(2));
-                        Numpy inputArray = new Numpy(results.get(3));
-
                         lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
+//                        Numpy vectArray = new Numpy(results.get(0));
+//                        Numpy heatArray = new Numpy(results.get(1));
+//                        Numpy confidence1Array = new Numpy(results.get(2));
+//                        Numpy inputArray = new Numpy(results.get(3));
+                        deal.setVect(results.get(0));
+                        deal.setHeat(results.get(1));
+                        List<Deal.Result> coord = deal.getPen();
                         float[] confidence1 = results.get(1);
                         byte[] byteHeat1 = slice(confidence1, 0, 3, 6);
                         Bitmap stitchBmp = Bitmap.createBitmap(20, 15, Bitmap.Config.ARGB_4444);
                         stitchBmp.copyPixelsFromBuffer(ByteBuffer.wrap(byteHeat1));
 
+                        //开始绘制右下角视图
                         Matrix matrix = new Matrix();
-                        matrix.postScale(35, 35);
-                        // 得到新的圖片
+                        matrix.postScale(32, 32);
                         Bitmap newbm = Bitmap.createBitmap(stitchBmp, 0, 0, 20, 15, matrix,true);
 
                         cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
@@ -107,9 +118,18 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                         canvas.drawBitmap(newbm, new Matrix(), new Paint());
 
                         final Paint paint = new Paint();
-                        paint.setColor(Color.RED);
+                        paint.setTextSize(50);
+                        paint.setColor(Color.BLUE);
                         paint.setStyle(Paint.Style.STROKE);
                         paint.setStrokeWidth(2.0f);
+                        canvas.drawText(String.format("FPS %.3f", 1000.0f/lastProcessingTimeMs),0, 50, paint);
+                        canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), paint);
+
+                        for (Deal.Result result: coord){
+                            if(result.grade.count>8.0&result.grade.score>9){
+                                canvas.drawLine(result.point1.x, result.point1.y, result.point2.x, result.point2.y, paint);
+                            }
+                        }
 
                         float minimumConfidence = 0.8f;
 
@@ -131,16 +151,17 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
             channel = arg[0];
         }
         byte[] byteConfidence1 = new byte[900];
-
+        //切片
         for(int i=0;i<byteConfidence1.length;i++){
-            int index = (i+start)/thickness*channel+(i+start)%thickness;
+            int index = i/thickness*channel+i%thickness+start;
             byteConfidence1[i] = (byte) (array[index]*255);
         }
         byte[] byteHeat1 = new byte[1200];
         for(int i=0;i<300;i++){
             byteHeat1[i*4] = byteConfidence1[i*3];
             byteHeat1[i*4+1] = byteConfidence1[i*3+1];
-            byteHeat1[i*4+2] = byteConfidence1[i*3+2];
+//            byteHeat1[i*4+2] = byteConfidence1[i*3+2];
+            byteHeat1[i*4+2] = 0;
             // a
             byteHeat1[i*4+3] = (byte) (255*0.7);
         }
@@ -171,30 +192,38 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
         frameToCropTransform.invert(cropToFrameTransform);
 
         trackingOverlay = (OverlayView) findViewById(R.id.pen_overlay);
+        trackingOverlay.setOnTouchListener(this);
         trackingOverlay.addCallback(
                 new OverlayView.DrawCallback() {
                     @Override
                     public void drawCallback(final Canvas canvas) {
-//                        draw(canvas);
+                        draw(canvas);
                     }
                 });
-        //绘制右下角视图
+        //在屏幕中加入右下角视图(addDebugCallback: 父类CameraActivity的方法)
         addDebugCallback(
                 new OverlayView.DrawCallback() {
                     @Override
                     public void drawCallback(final Canvas canvas) {
-                        final Bitmap copy = cropCopyBitmap;
+                        final Bitmap copy = cropCopyBitmap;  //复制右下角视图
 
-                        final int backgroundColor = Color.argb(100, 0, 0, 0);
+                        final int backgroundColor = Color.argb(0, 0, 0, 0);
                         canvas.drawColor(backgroundColor);
 
                         final Matrix matrix = new Matrix();
                         final float scaleFactor = 1;
-                        matrix.postScale(scaleFactor, scaleFactor);
-                        matrix.postTranslate(
-                                canvas.getWidth() - copy.getWidth() * scaleFactor,
-                                canvas.getHeight() - copy.getHeight() * scaleFactor);
+                        if(offset_x==-1 | offset_y==-1){
+                            offset_x = canvas.getWidth() - copy.getWidth() * scaleFactor;
+                            offset_y = canvas.getHeight() - copy.getHeight() * scaleFactor;
+                        }
+                        matrix.postScale(scaleFactor, scaleFactor); //缩放
+                        matrix.postTranslate(offset_x, offset_y); //平移
                         canvas.drawBitmap(copy, matrix, new Paint());
+                        Paint paint = new Paint();
+                        paint.setTextSize(50);
+                        paint.setColor(Color.RED);
+                        paint.setStyle(Paint.Style.STROKE);
+                        canvas.drawText("TIME "+lastProcessingTimeMs,0, 50, paint);
                     }
                 });
 
@@ -214,23 +243,11 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                         (int) (multiplier * (rotated ? previewWidth : previewHeight)),
                         sensorOrientation,
                         false);
-//        final RectF trackedPos =
-//                (objectTracker != null)
-//                        ? recognition.trackedObject.getTrackedPositionInPreviewFrame()
-//                        : new RectF(recognition.location);
-//
-//        Paint boxPaint = new Paint();
-//        boxPaint.setColor(Color.RED);
-//        boxPaint.setStyle(Paint.Style.STROKE);
-//        boxPaint.setStrokeWidth(12.0f);
-//        boxPaint.setStrokeCap(Paint.Cap.ROUND);
-//        boxPaint.setStrokeJoin(Paint.Join.ROUND);
-//        boxPaint.setStrokeMiter(100);
-//        final float cornerSize = Math.min(w, h) / 8.0f;
-//        canvas.drawRoundRect(trackedPos, cornerSize, cornerSize, boxPaint);
-//
-//        final String labelString = "";
-//        canvas.drawText(labelString, x, y, labelString);
+        Paint paint = new Paint();
+        paint.setTextSize(50);
+        paint.setColor(Color.CYAN);
+        paint.setStyle(Paint.Style.STROKE);
+        canvas.drawText("aaaa", 200, 500, paint);
     }
 
     /**
@@ -249,5 +266,47 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
     @Override
     protected Size getDesiredPreviewFrameSize() {
         return DESIRED_PREVIEW_SIZE;
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        float x,y;
+        switch (event.getAction()) {
+            /**
+             * 点击的开始位置
+             */
+            case MotionEvent.ACTION_DOWN:
+                x = event.getX();
+                y = event.getY();
+                this.offset_x = x;
+                this.offset_y = y;
+                break;
+            /**
+             * 触屏实时位置
+             */
+            case MotionEvent.ACTION_MOVE:
+                x = event.getX();
+                y = event.getY();
+                this.offset_x = x;
+                this.offset_y = y;
+                break;
+            /**
+             * 离开屏幕的位置
+             */
+            case MotionEvent.ACTION_UP:
+                x = event.getX();
+                y = event.getY();
+                this.offset_x = x;
+                this.offset_y = y;
+                break;
+            default:
+                break;
+        }
+        /**
+         *  注意返回值
+         *  true：view继续响应Touch操作；
+         *  false：view不再响应Touch操作，故此处若为false，只能显示起始位置，不能显示实时位置和结束位置
+         */
+        return true;
     }
 }
