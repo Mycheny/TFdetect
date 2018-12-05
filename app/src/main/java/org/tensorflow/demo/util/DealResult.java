@@ -72,8 +72,6 @@ public class DealResult {
         return pointList;
     }
 
-
-
     public List<Result> getPen(){
         List<Result> resultList = new ArrayList<Result>();
         float [] confidence1 = slice(this.heat, 0, 1, 6);
