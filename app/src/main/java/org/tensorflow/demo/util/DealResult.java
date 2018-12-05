@@ -2,23 +2,20 @@ package org.tensorflow.demo.util;
 
 import android.graphics.Bitmap;
 import android.graphics.Point;
-import android.graphics.Rect;
-import android.net.wifi.hotspot2.omadm.PpsMoParser;
-
-import org.tensorflow.Graph;
-import org.tensorflow.demo.R;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Deal {
+/**
+ * 处理笔尖识别结果的工具类
+ */
+public class DealResult {
     private float[] vect = null;
     private float[] heat = null;
-    public Deal(){}
-    private static Deal deal = new Deal();
-    public static Deal getInstance() {
-        return deal;
+
+    private static DealResult dealResult = new DealResult();
+    public static DealResult getInstance() {
+        return dealResult;
     }
 
     public float [] slice(float array[], int start, int end, int... arg) {
@@ -88,8 +85,7 @@ public class Deal {
                 Result result = new Result();
                 Point point11 = new Point();
                 Point point22 = new Point();
-                Grade grade = getScore(point1, point2);
-                result.grade=grade;
+                result.grade= getScore(point1, point2);
                 float x10 = this.heat[6 * point1.x + 120 * point1.y + 2];
                 float y10 = this.heat[6 * point1.x + 120 * point1.y + 3];
                 float x20 = this.heat[6 * point1.x + 120 * point1.y + 4];
@@ -109,8 +105,6 @@ public class Deal {
     private Grade getScore(Point point1, Point point2) {
         Grade grade = new Grade();
         int num_inter = 10;
-        int []xs = new int[num_inter];
-        int []ys = new int[num_inter];
         double dx = point1.x-point2.x;
         double dy = point1.y-point2.y;
         double normVec = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
@@ -140,13 +134,13 @@ public class Deal {
         public Grade grade;
         public Point point1;
         public Point point2;
-        public Result(){}
+        Result(){}
     }
 
     public class Grade{
         public float count=0;
         public float score=0;
-        public Grade(){
+        Grade(){
         }
     }
 

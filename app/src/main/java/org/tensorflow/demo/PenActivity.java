@@ -1,33 +1,23 @@
 package org.tensorflow.demo;
 
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.RectF;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.SystemClock;
-import android.text.TextUtils;
-import android.util.Log;
 import android.util.Size;
-import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 
 import org.tensorflow.demo.env.ImageUtils;
 import org.tensorflow.demo.env.Logger;
-import org.tensorflow.demo.tracking.MultiBoxTracker;
-import org.tensorflow.demo.util.Deal;
-import org.tensorflow.demo.util.Numpy;
-import org.w3c.dom.Text;
+import org.tensorflow.demo.util.DealResult;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -58,7 +48,8 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
     private float offset_x = -1;
     private float offset_y = -1;
 
-    private Deal deal = Deal.getInstance();
+    private DealResult dealResult = DealResult.getInstance();
+    private List<DealResult.Result> coordinates = null;
 
     @Override
     protected void processImage() {
@@ -99,9 +90,9 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
 //                        Numpy heatArray = new Numpy(results.get(1));
 //                        Numpy confidence1Array = new Numpy(results.get(2));
 //                        Numpy inputArray = new Numpy(results.get(3));
-                        deal.setVect(results.get(0));
-                        deal.setHeat(results.get(1));
-                        List<Deal.Result> coord = deal.getPen();
+                        dealResult.setVect(results.get(0));
+                        dealResult.setHeat(results.get(1));
+                        coordinates = dealResult.getPen();
                         float[] confidence1 = results.get(1);
                         byte[] byteHeat1 = slice(confidence1, 0, 3, 6);
                         Bitmap stitchBmp = Bitmap.createBitmap(20, 15, Bitmap.Config.ARGB_4444);
@@ -127,9 +118,9 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
 
                         Paint paintLine = new Paint();
                         paintLine.setColor(Color.WHITE);
-                        for (Deal.Result result: coord){
-                            if(result.grade.count>9.0&result.grade.score>9){
-                                canvas.drawLine(result.point1.x, result.point1.y, result.point2.x, result.point2.y, paintLine);
+                        for (DealResult.Result coord: coordinates){
+                            if(coord.grade.count>9.0&coord.grade.score>9){
+                                canvas.drawLine(coord.point1.x, coord.point1.y, coord.point2.x, coord.point2.y, paintLine);
                             }
                         }
 
@@ -199,7 +190,29 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                 new OverlayView.DrawCallback() {
                     @Override
                     public void drawCallback(final Canvas canvas) {
-                        draw(canvas);
+                        final boolean rotated = sensorOrientation % 180 == 90;
+                        final float multiplier =
+                                Math.min(canvas.getHeight() / (float) (rotated ? previewWidth : previewHeight),
+                                        canvas.getWidth() / (float) (rotated ? previewHeight : previewWidth));
+                        frameToCanvasMatrix =
+                                ImageUtils.getTransformationMatrix(
+                                        previewWidth,
+                                        previewHeight,
+                                        (int) (multiplier * (rotated ? previewHeight : previewWidth)),
+                                        (int) (multiplier * (rotated ? previewWidth : previewHeight)),
+                                        sensorOrientation,
+                                        false);
+                        if(coordinates!=null){
+                            Paint paint = new Paint();
+                            paint.setTextSize(50);
+                            paint.setColor(Color.CYAN);
+                            paint.setStyle(Paint.Style.STROKE);
+                            for (DealResult.Result coord: coordinates){
+                                if(coord.grade.count>9.0&coord.grade.score>9){
+                                    canvas.drawLine((float) (coord.point1.x/640.0*1080.0), (float) (coord.point1.y*(1440.0/480)), (float) (coord.point2.x/640.0*1080), (float) (coord.point2.y*(1440.0/480)), paint);
+                                }
+                            }
+                        }
                     }
                 });
         //在屏幕中加入右下角视图(addDebugCallback: 父类CameraActivity的方法)
@@ -230,26 +243,6 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                 });
 
 
-    }
-
-    private void draw(Canvas canvas) {
-        final boolean rotated = sensorOrientation % 180 == 90;
-        final float multiplier =
-                Math.min(canvas.getHeight() / (float) (rotated ? previewWidth : previewHeight),
-                        canvas.getWidth() / (float) (rotated ? previewHeight : previewWidth));
-        frameToCanvasMatrix =
-                ImageUtils.getTransformationMatrix(
-                        previewWidth,
-                        previewHeight,
-                        (int) (multiplier * (rotated ? previewHeight : previewWidth)),
-                        (int) (multiplier * (rotated ? previewWidth : previewHeight)),
-                        sensorOrientation,
-                        false);
-        Paint paint = new Paint();
-        paint.setTextSize(50);
-        paint.setColor(Color.CYAN);
-        paint.setStyle(Paint.Style.STROKE);
-        canvas.drawText("aaaa", 200, 500, paint);
     }
 
     /**
