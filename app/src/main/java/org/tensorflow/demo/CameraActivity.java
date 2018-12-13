@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -102,6 +103,33 @@ public abstract class CameraActivity extends Activity
         return yuvBytes[0];
     }
 
+    static public void decodeYUV420SP(int[] rgb, byte[] yuv420sp, int width, int height) {
+        final int frameSize = width * height;
+
+        for (int j = 0, yp = 0; j < height; j++) {
+            int uvp = frameSize + (j >> 1) * width, u = 0, v = 0;
+            for (int i = 0; i < width; i++, yp++) {
+                int y = (0xff & ((int) yuv420sp[yp])) - 16;
+                if (y < 0) y = 0;
+                if ((i & 1) == 0) {
+                    v = (0xff & yuv420sp[uvp++]) - 128;
+                    u = (0xff & yuv420sp[uvp++]) - 128;
+                }
+
+                int y1192 = 1192 * y;
+                int r = (y1192 + 1634 * v);
+                int g = (y1192 - 833 * v - 400 * u);
+                int b = (y1192 + 2066 * u);
+
+                if (r < 0) r = 0; else if (r > 262143) r = 262143;
+                if (g < 0) g = 0; else if (g > 262143) g = 262143;
+                if (b < 0) b = 0; else if (b > 262143) b = 262143;
+
+                rgb[yp] = 0xff000000 | ((r << 6) & 0xff0000) | ((g >> 2) & 0xff00) | ((b >> 10) & 0xff);
+            }
+        }
+    }
+
     /**
      * Callback for android.hardware.Camera API
      */
@@ -135,7 +163,43 @@ public abstract class CameraActivity extends Activity
                 new Runnable() {
                     @Override
                     public void run() {
+                        byte[] byteHeat1 = new byte[640*480*4];
+                        for(int i=0;i<640*480;i++){
+                            int offset = 640*480;
+                            int y = bytes[i]&0xFF;
+                            int u = bytes[offset+i/4*2]&0xFF;
+                            int v = bytes[offset+i/4*2+1]&0xFF;
+                            int r = (int) (y+1.14*v);
+                            int g = (int) (y-0.39*u-0.58*v);
+                            int b = (int) (y+2.03*u);
+                            byte R = (byte) (Math.min(Math.max(r, 0), 255));
+                            byte G = (byte) (Math.min(Math.max(g, 0), 255));
+                            byte B = (byte) (Math.min(Math.max(b, 0), 255));
+
+                            byteHeat1[i*4] = R;
+                            byteHeat1[i*4+1] = G;
+                            byteHeat1[i*4+2] = B;
+                            byteHeat1[i*4+3] = (byte) (255*1.0);
+                        }
+                        Bitmap stitchBmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_4444);
+                        stitchBmp.copyPixelsFromBuffer(ByteBuffer.wrap(byteHeat1));
                         ImageUtils.convertYUV420SPToARGB8888(bytes, previewWidth, previewHeight, rgbBytes);
+                        byte[] byteHeat2 = new byte[640*480*4];
+                        int value = -14473691;
+                        byte aa = (byte) value;
+                        int a = (value >> 32) & 0xFF;
+                        int r = (value >> 16) & 0xFF;
+                        int g = (value >> 8) & 0xFF;
+                        int b = (value) & 0xFF;
+                        for(int i=0;i<640*480;i++){
+                            byteHeat2[i*4] = (byte) ((rgbBytes[i] >> 16) & 0xFF);
+                            byteHeat2[i*4+1] = (byte) ((rgbBytes[i] >> 8) & 0xFF);
+                            byteHeat2[i*4+2] = (byte) (rgbBytes[i] & 0xFF);
+                            byteHeat2[i*4+3] = (byte) (255*1.0);
+                        }
+                        Bitmap stitchBmp2 = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_4444);
+                        stitchBmp2.copyPixelsFromBuffer(ByteBuffer.wrap(byteHeat2));
+                        LOGGER.i("");
                     }
                 };
 

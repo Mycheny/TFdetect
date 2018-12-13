@@ -57,7 +57,7 @@ public class DealResult {
         List<Point> pointList = new ArrayList<Point>();
         float threshold;
         if(arg.length==0){
-            threshold = 0.8f;
+            threshold = 0.85f;
         }else {
             threshold = arg[0];
         }
@@ -120,9 +120,12 @@ public class DealResult {
             double pafXs = this.vect[40*y+2*x];
             double pafYs = this.vect[40*y+2*x+1];
             double local_scores = pafXs*vx+pafYs*vy;
-            if (local_scores>0.2){
+            double d1 = Math.sqrt(Math.pow(pafXs,2)+Math.pow(pafYs,2));
+            double d2 = Math.sqrt(Math.pow(vx,2)+Math.pow(vy,2));
+            double angle_cosine = local_scores/(d1*d2)*(1-Math.abs(d1-d2));
+            if (angle_cosine>0.5){
                 grade.count+=1;
-                grade.score+=local_scores;
+                grade.score+=angle_cosine;
             }
         }
         return grade;

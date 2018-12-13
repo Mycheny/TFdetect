@@ -10,13 +10,24 @@ android {
         versionCode 1
         versionName '1.0'
         externalNativeBuild {
+//            cmake {
+//                cppFlags "-std=c++14"
+//                arguments "-DANDROID_STL=c++_shared"
+//            }
             cmake {
                 cppFlags ""
                 arguments "-DANDROID_STL=c++_shared"
             }
+
         }
         ndk {
             abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+        }
+        buildTypes{
+            debug{
+                jniDebuggable true
+                jniDebuggable = true
+            }
         }
     }
 

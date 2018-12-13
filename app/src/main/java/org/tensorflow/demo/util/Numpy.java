@@ -9,46 +9,41 @@ public class Numpy {
 
     public Numpy(float [] array){
         this.array = array;
-        getMax();
-        getMin();
-        getMean();
-        getStd();
+        init();
     }
 
-    private void getStd() {
-        double sum = 0;
+    private void init() {
+        double sum_mean = 0;
+        double sum_std = 0;
+        double temp_min = 255;
+        double temp_max = 0;
         for (float anArray : this.array) {
-            sum+=Math.pow(anArray-this.mean, 2);
+            sum_mean+=anArray;
+            if (temp_min > anArray) {
+                temp_min = anArray;
+            }else if (temp_max < anArray) {
+                temp_max = anArray;
+            }
         }
-        double variance = sum/this.array.length;
+        mean = sum_mean/this.array.length;
+
+
+        for (float anArray : this.array) {
+            sum_std+=Math.pow(anArray-this.mean, 2);
+        }
+        double variance = sum_std/this.array.length;
         std = Math.sqrt(variance);
+        min = temp_min;
+        max = temp_max;
     }
 
-    private void getMean() {
-        double sum = 0;
-        for (float anArray : this.array) {
-            sum+=anArray;
-        }
-        mean = sum/this.array.length;
-    }
-
-    private void getMin() {
-        double temp = 255;
-        for (float anArray : this.array) {
-            if (temp > anArray) {
-                temp = anArray;
-            }
-        }
-        min = temp;
-    }
-
-    private void getMax() {
-        double temp = 0;
-        for (float anArray : this.array) {
-            if (temp < anArray) {
-                temp = anArray;
-            }
-        }
-        max = temp;
+    @Override
+    public String toString() {
+        return "Numpy{" +
+                "max=" + max +
+                ", min=" + min +
+                ", mean=" + mean +
+                ", std=" + std +
+                '}';
     }
 }

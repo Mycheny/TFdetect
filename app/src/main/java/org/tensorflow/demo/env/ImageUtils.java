@@ -23,6 +23,8 @@ import android.os.Environment;
 import java.io.File;
 import java.io.FileOutputStream;
 
+import static java.lang.System.loadLibrary;
+
 /**
  * Utility class for manipulating images.
  **/
@@ -32,7 +34,7 @@ public class ImageUtils {
 
     static {
         try {
-            System.loadLibrary("tensorflow_demo");
+            loadLibrary("tensorflow_demo");
         } catch (UnsatisfiedLinkError e) {
             LOGGER.w("Native library not found, native RGB -> YUV conversion may be unavailable.");
         }

@@ -15,6 +15,7 @@ import android.view.View.OnTouchListener;
 import org.tensorflow.demo.env.ImageUtils;
 import org.tensorflow.demo.env.Logger;
 import org.tensorflow.demo.util.DealResult;
+import org.tensorflow.demo.util.Numpy;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -37,7 +38,7 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
     private long timestamp = 0;
     private boolean computingDetection = false;
     private Bitmap rgbFrameBitmap = null;
-    private Bitmap croppedBitmap = null;
+    private Bitmap croppedBitmap = null; //主视图
     private Bitmap cropCopyBitmap = null;  //右下角视图
     private byte[] luminanceCopy;
 
@@ -90,6 +91,7 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
 //                        Numpy heatArray = new Numpy(results.get(1));
 //                        Numpy confidence1Array = new Numpy(results.get(2));
 //                        Numpy inputArray = new Numpy(results.get(3));
+//                        LOGGER.i("inputArray " + inputArray.toString());
                         dealResult.setVect(results.get(0));
                         dealResult.setHeat(results.get(1));
                         coordinates = dealResult.getPen();
@@ -119,7 +121,7 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                         Paint paintLine = new Paint();
                         paintLine.setColor(Color.WHITE);
                         for (DealResult.Result coord: coordinates){
-                            if(coord.grade.count>9.0&coord.grade.score>9){
+                            if(coord.grade.count>=8&coord.grade.score>=8){
                                 canvas.drawLine(coord.point1.x, coord.point1.y, coord.point2.x, coord.point2.y, paintLine);
                             }
                         }
@@ -208,7 +210,7 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                             paint.setColor(Color.CYAN);
                             paint.setStyle(Paint.Style.STROKE);
                             for (DealResult.Result coord: coordinates){
-                                if(coord.grade.count>9.0&coord.grade.score>9){
+                                if(coord.grade.count>=8&coord.grade.score>=8){
                                     canvas.drawLine((float) (coord.point1.x/640.0*1080.0), (float) (coord.point1.y*(1440.0/480)), (float) (coord.point2.x/640.0*1080), (float) (coord.point2.y*(1440.0/480)), paint);
                                 }
                             }
