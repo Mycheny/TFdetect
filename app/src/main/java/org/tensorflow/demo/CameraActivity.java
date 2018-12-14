@@ -183,14 +183,10 @@ public abstract class CameraActivity extends Activity
                         }
                         Bitmap stitchBmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_4444);
                         stitchBmp.copyPixelsFromBuffer(ByteBuffer.wrap(byteHeat1));
+                        int rgb[] = new int[640*480];
+                        decodeYUV420SP(rgb, bytes, previewWidth, previewHeight);
                         ImageUtils.convertYUV420SPToARGB8888(bytes, previewWidth, previewHeight, rgbBytes);
                         byte[] byteHeat2 = new byte[640*480*4];
-                        int value = -14473691;
-                        byte aa = (byte) value;
-                        int a = (value >> 32) & 0xFF;
-                        int r = (value >> 16) & 0xFF;
-                        int g = (value >> 8) & 0xFF;
-                        int b = (value) & 0xFF;
                         for(int i=0;i<640*480;i++){
                             byteHeat2[i*4] = (byte) ((rgbBytes[i] >> 16) & 0xFF);
                             byteHeat2[i*4+1] = (byte) ((rgbBytes[i] >> 8) & 0xFF);
@@ -199,6 +195,16 @@ public abstract class CameraActivity extends Activity
                         }
                         Bitmap stitchBmp2 = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_4444);
                         stitchBmp2.copyPixelsFromBuffer(ByteBuffer.wrap(byteHeat2));
+
+                        byte[] byteHeat3 = new byte[640*480*4];
+                        for(int i=0;i<640*480;i++){
+                            byteHeat3[i*4] = (byte) ((rgb[i] >> 16) & 0xFF);
+                            byteHeat3[i*4+1] = (byte) ((rgb[i] >> 8) & 0xFF);
+                            byteHeat3[i*4+2] = (byte) (rgb[i] & 0xFF);
+                            byteHeat3[i*4+3] = (byte) (255*1.0);
+                        }
+                        Bitmap stitchBmp3 = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_4444);
+                        stitchBmp3.copyPixelsFromBuffer(ByteBuffer.wrap(byteHeat3));
                         LOGGER.i("");
                     }
                 };

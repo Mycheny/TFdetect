@@ -16,8 +16,8 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} \
                               -Wl,--allow-multiple-definition \
                               -Wl,--whole-archive -fPIE -v")
 
-file(GLOB tensorflow_demo_sources src/main/cpp/*.cc src/main/cpp/object_tracking/*.cc)
-include_directories(. object_tracking)
+file(GLOB tensorflow_demo_sources src/main/cpp/image_deal/*.cc src/main/cpp/object_tracking/*.cc)
+include_directories(src/main/cpp/image_deal src/main/cpp/object_tracking)
 
 add_library(tensorflow_demo SHARED ${tensorflow_demo_sources})
 
