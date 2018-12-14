@@ -166,9 +166,9 @@ public abstract class CameraActivity extends Activity
                         byte[] byteHeat1 = new byte[640*480*4];
                         for(int i=0;i<640*480;i++){
                             int offset = 640*480;
-                            int y = bytes[i]&0xFF;
-                            int u = bytes[offset+i/4*2]&0xFF;
-                            int v = bytes[offset+i/4*2+1]&0xFF;
+                            int y = ((int) bytes[i]&0xFF)-16;
+                            int u = ((int) bytes[offset+i/4*2]&0xFF)-128;
+                            int v = ((int) bytes[offset+i/4*2+1]&0xFF)-128;
                             int r = (int) (y+1.14*v);
                             int g = (int) (y-0.39*u-0.58*v);
                             int b = (int) (y+2.03*u);
