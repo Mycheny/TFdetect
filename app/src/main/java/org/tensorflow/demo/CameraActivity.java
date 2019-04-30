@@ -35,6 +35,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.SystemClock;
 import android.os.Trace;
 import android.util.Size;
 import android.view.KeyEvent;
@@ -163,6 +164,7 @@ public abstract class CameraActivity extends Activity
                 new Runnable() {
                     @Override
                     public void run() {
+                        long startTime = SystemClock.uptimeMillis();
                         byte[] byteHeat1 = new byte[640*480*4];
                         for(int i=0;i<640*480;i++){
                             int offset = 640*480;
@@ -181,11 +183,20 @@ public abstract class CameraActivity extends Activity
                             byteHeat1[i*4+2] = B;
                             byteHeat1[i*4+3] = (byte) (255*1.0);
                         }
+                        long  end = SystemClock.uptimeMillis();
+                        long ProcessingTime = end - startTime;
                         Bitmap stitchBmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_4444);
                         stitchBmp.copyPixelsFromBuffer(ByteBuffer.wrap(byteHeat1));
                         int rgb[] = new int[640*480];
+                        startTime = SystemClock.uptimeMillis();
                         decodeYUV420SP(rgb, bytes, previewWidth, previewHeight);
+                        end = SystemClock.uptimeMillis();
+                        ProcessingTime = end - startTime;
+
+                        startTime = SystemClock.uptimeMillis();
                         ImageUtils.convertYUV420SPToARGB8888(bytes, previewWidth, previewHeight, rgbBytes);
+                        end = SystemClock.uptimeMillis();
+                        ProcessingTime = end - startTime;
                         byte[] byteHeat2 = new byte[640*480*4];
                         for(int i=0;i<640*480;i++){
                             byteHeat2[i*4] = (byte) ((rgbBytes[i] >> 16) & 0xFF);

@@ -7,6 +7,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.SystemClock;
+import android.util.Log;
 import android.util.Size;
 import android.view.MotionEvent;
 import android.view.View;
@@ -15,20 +16,20 @@ import android.view.View.OnTouchListener;
 import org.tensorflow.demo.env.ImageUtils;
 import org.tensorflow.demo.env.Logger;
 import org.tensorflow.demo.util.DealResult;
-import org.tensorflow.demo.util.Numpy;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
-public class PenActivity extends CameraActivity implements OnImageAvailableListener, OnTouchListener {
+public class PenLSTMActivity extends CameraActivity implements OnImageAvailableListener, OnTouchListener {
     private static final Logger LOGGER = new Logger();
     private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 480);
     private static final int INPUT_SIZE_WIDTH = 640;
     private static final int INPUT_SIZE_HEIGHT = 480;
     private ClassifierPen detector;
-    private static final String MODEL_FILE = "file:///android_asset/model_pen.pb";
+    private static final String MODEL_FILE = "file:///android_asset/lstm_model_pen.pb";
     OverlayView trackingOverlay;
 
     private Integer sensorOrientation;
@@ -49,8 +50,16 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
     private float offset_x = -1;
     private float offset_y = -1;
 
-    private DealResult dealResult = DealResult.getInstance();
-    private List<DealResult.Result> coordinates = null;
+    private int []coordinates = new int[2];
+
+    public String listToString(List list, char separator) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < list.size(); i++) {
+            sb.append(list.get(i)).append(separator);
+
+        }
+        return sb.toString().substring(0, sb.toString().length() - 1);
+    }
 
     @Override
     protected void processImage() {
@@ -84,31 +93,22 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                     public void run() {
                         LOGGER.i("图像运行检测 " + currTimestamp);
                         final long startTime = SystemClock.uptimeMillis();
-                        final List<float[]> results = detector.recognizeImage(croppedBitmap);
+                        final List<int []> results = detector.recognizeImageIntBuffer(croppedBitmap);
+                        LOGGER.i("result", String.valueOf(results.get(0)[0])+String.valueOf(results.get(1)[0]));
                         lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
 //                        Numpy vectArray = new Numpy(results.get(0));
 //                        Numpy heatArray = new Numpy(results.get(1));
 //                        Numpy confidence1Array = new Numpy(results.get(2));
 //                        Numpy inputArray = new Numpy(results.get(3));
-//                        LOGGER.i("inputArray " + inputArray.toString());
-                        dealResult.setVect(results.get(0));
-                        dealResult.setHeat(results.get(1));
-                        coordinates = dealResult.getPen();
-                        float[] confidence1 = results.get(1);
-                        byte[] byteHeat1 = slice(confidence1, 0, 3, 6);
-                        Bitmap stitchBmp = Bitmap.createBitmap(20, 15, Bitmap.Config.ARGB_4444);
-                        stitchBmp.copyPixelsFromBuffer(ByteBuffer.wrap(byteHeat1));
-
+                        coordinates[0] = results.get(0)[0];
+                        coordinates[1] = results.get(1)[0];
+//
                         //开始绘制右下角视图
-                        Matrix matrix = new Matrix();
-                        matrix.postScale(32, 32);
-                        Bitmap newbm = Bitmap.createBitmap(stitchBmp, 0, 0, 20, 15, matrix,true);
-
                         cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
                         final Canvas canvas = new Canvas(cropCopyBitmap);
 
-                        canvas.drawBitmap(newbm, new Matrix(), new Paint());
+                        canvas.drawBitmap(croppedBitmap, new Matrix(), new Paint());
 
                         final Paint paint = new Paint();
                         paint.setTextSize(50);
@@ -120,12 +120,9 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
 
                         Paint paintLine = new Paint();
                         paintLine.setColor(Color.WHITE);
-                        for (DealResult.Result coord: coordinates){
-                            if(coord.grade.count>=8&coord.grade.score>=8){
-                                canvas.drawLine(coord.point1.x, coord.point1.y, coord.point2.x, coord.point2.y, paintLine);
-                            }
+                        if (coordinates!=null){
+                            canvas.drawRect(coordinates[0]-10, coordinates[1]-10, coordinates[0]+10, coordinates[1]+10, paint);
                         }
-
                         float minimumConfidence = 0.8f;
 
                         final List<Classifier.Recognition> mappedRecognitions =
@@ -166,7 +163,7 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
     @Override
     protected void onPreviewSizeChosen(Size size, int rotation) {
         try {
-            detector = TensorflowPenDetector.create(getAssets(), MODEL_FILE, INPUT_SIZE_WIDTH, INPUT_SIZE_HEIGHT);
+            detector = TensorflowPenLSTMDetector.create(getAssets(), MODEL_FILE, INPUT_SIZE_WIDTH, INPUT_SIZE_HEIGHT);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -209,11 +206,9 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                             paint.setTextSize(50);
                             paint.setColor(Color.CYAN);
                             paint.setStyle(Paint.Style.STROKE);
-                            for (DealResult.Result coord: coordinates){
-                                if(coord.grade.count>=8&coord.grade.score>=8){
-                                    canvas.drawLine((float) (coord.point1.x/640.0*1080.0), (float) (coord.point1.y*(1440.0/480)), (float) (coord.point2.x/640.0*1080), (float) (coord.point2.y*(1440.0/480)), paint);
-                                }
-                            }
+                            int x = canvas.getWidth()*coordinates[0]/640;
+                            int y = (int) (canvas.getHeight()*(486.0/764)*coordinates[1]/480);
+                            canvas.drawRect(x-10, y-10, x+10, y+10, paint);
                         }
                     }
                 });
@@ -241,6 +236,12 @@ public class PenActivity extends CameraActivity implements OnImageAvailableListe
                             paint.setColor(Color.RED);
                             paint.setStyle(Paint.Style.STROKE);
                             canvas.drawText("TIME "+lastProcessingTimeMs,0, 50, paint);
+                            int x = canvas.getWidth()*coordinates[0]/640;
+                            int y = (int) (canvas.getHeight()*(486.0/764)*coordinates[1]/480);
+                            canvas.drawText("POINT1 "+coordinates[0] + " " + coordinates[1],0, 150, paint);
+                            canvas.drawText("POINT2 "+x + " " + y,0, 250, paint);
+                            canvas.drawText("wh "+canvas.getWidth() + " " + canvas.getHeight(),0, 350, paint);
+                            canvas.drawRect(x-10, y-10, x+10, y+10, paint);
                         }
                     }
                 });

@@ -20,5 +20,6 @@
     <string name="activity_name_classification">TF Classify</string>
     <string name="activity_name_detection">TF Detect</string>
     <string name="activity_name_pen">笔尖识别</string>
+    <string name="activity_name_pen_lstm">笔尖识别LSTM</string>
 
 </resources>

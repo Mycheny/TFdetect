@@ -18,6 +18,7 @@ package org.tensorflow.demo;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
 
+import java.nio.IntBuffer;
 import java.util.List;
 
 /**
@@ -101,6 +102,7 @@ public interface ClassifierPen {
     }
 
     List<float[]> recognizeImage(Bitmap bitmap);
+    List<int []> recognizeImageIntBuffer(Bitmap bitmap);
 
     void enableStatLogging(final boolean debug);
 
